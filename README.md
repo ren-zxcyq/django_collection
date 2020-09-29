@@ -21,27 +21,28 @@ Optional can specify app name, in order to migrate only the given apps Models et
 - including field types & possibly their max size, def vals, selection list options, help text for documentation, label text for forms etc.
 - Models are implemented as subclasses of:	django.db.models.Model
 
-- `from django.db import models
+- An Example:
+	`from django.db import models
 
-class MyModelName(models.Model):
-    """A typical class defining a model, derived from the Model class."""
+	class MyModelName(models.Model):
+		"""A typical class defining a model, derived from the Model class."""
 
-    # Fields
-    my_field_name = models.CharField(max_length=20, help_text='Enter field documentation')
-    ...
+		# Fields
+		my_field_name = models.CharField(max_length=20, help_text='Enter field documentation')
+		...
 
-    # Metadata
-    class Meta: 
-        ordering = ['-my_field_name']
+		# Metadata
+		class Meta: 
+			ordering = ['-my_field_name']
 
-    # Methods
-    def get_absolute_url(self):
-        """Returns the url to access a particular instance of MyModelName."""
-        return reverse('model-detail-view', args=[str(self.id)])
-    
-    def __str__(self):
-        """String for representing the MyModelName object (in Admin site etc.)."""
-        return self.my_field_name`
+		# Methods
+		def get_absolute_url(self):
+			"""Returns the url to access a particular instance of MyModelName."""
+			return reverse('model-detail-view', args=[str(self.id)])
+		
+		def __str__(self):
+			"""String for representing the MyModelName object (in Admin site etc.)."""
+			return self.my_field_name`
 
 - When used in a form, my_field_name would be My field name
 
@@ -94,36 +95,35 @@ class MyModelName(models.Model):
 
 ## Model Management
 
-### Create & Modify Record
-`# Create a new record using the model's constructor
-record = MyModelName(my_field_name="Instance No1")
+- Create & Modify Record
+	- Create a new record using the model's constructor
+	`record = MyModelName(my_field_name="Instance No1")`
 
- # Save the object into the db.
-record.save()
+	- Save the object into the db.
+	`record.save()`
 
- # Access the fields using dot syntax
-print(record.id)	# Should return 1 for the first record.
-print(record.my_field_name)	# Should print 'Instance No1'
+	- Access the fields using dot syntax
+	`print(record.id)	# Should return 1 for the first record.
+	print(record.my_field_name)	# Should print 'Instance No1'
 
- # Save the modified record
-record.my_field_name = "New Instance Name"
-record.save()
-`
+	- Save the modified record
+	`record.my_field_name = "New Instance Name"
+	record.save()`
 
-### Searching for records
--	Can retrieve records for a model as a QuerySet. (iterable object)	objects.all()
-`all_books = Book.objects.all()`
+- Searching for records
+	-	Can retrieve records for a model as a QuerySet. (iterable object)	objects.all()
+	`all_books = Book.objects.all()`
 
--	Filter the returned QuerySet (text or numeric field).
-
+	-	Filter the returned QuerySet (text or numeric field).
 	`wild_books = Book.objects.filter(title__contains='wild')
 	number_wild_books = wild_books.count()`
 
 -	In general filtering happens like this:
 	-	field_name__match_type
 	-	field_name__field_name__match_type
-		`# Will match on: Fiction, Science fiction, non-fiction etc.
-			books_containing_genre = Book.objects.filter(genre__name__icontains='fiction')`
+		Will match on: Fiction, Science fiction, non-fiction etc.
+			`books_containing_genre = Book.objects.filter`
+		(genre__name__icontains='fiction')
 	-	match_type can be:
 			-	contains	Case-Sensitive
 			-	icontains	insensitive
@@ -132,9 +132,9 @@ record.save()
 			-	in, gt
 			-	startswith
 			-	https://docs.djangoproject.com/en/2.1/ref/models/querysets/#field-lookups
--	There is a lot more you can do with queries, including backwards searches from related models, chaining filters, returning a smaller set of values etc. https://docs.djangoproject.com/en/2.1/topics/db/queries/
+	-	There is a lot more you can do with queries, including backwards searches from related models, chaining filters, returning a smaller set of values etc. https://docs.djangoproject.com/en/2.1/topics/db/queries/
 
 
 
-## Misc
+# Misc
 - https://stackoverflow.com/a/9181710
