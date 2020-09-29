@@ -8,7 +8,7 @@ By default it will serve the site to your local computer (http://127.0.0.1:8000/
 
 `python3 manage.py runserver`
 
-## Run the following commands to define tables or change the db tables whenever you change something in the models.
+Run the following commands to define tables or change the db tables whenever you change something in the models.
 - python3 manage.py makemigrations
 - python3 manage.py migrate
 
