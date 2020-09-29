@@ -1,5 +1,5 @@
 # django_experiment
-Django Tut Playground @Ix76
+Django Tut Playground @Ix76y
 
 # Notes
 
