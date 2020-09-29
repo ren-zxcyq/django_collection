@@ -115,8 +115,9 @@ record.save()
 `all_books = Book.objects.all()`
 
 -	Filter the returned QuerySet (text or numeric field).
-`wild_books = Book.objects.filter(title__contains='wild')
-number_wild_books = wild_books.count()`
+
+	`wild_books = Book.objects.filter(title__contains='wild')
+	number_wild_books = wild_books.count()`
 
 -	In general filtering happens like this:
 	-	field_name__match_type
