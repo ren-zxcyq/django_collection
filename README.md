@@ -52,7 +52,7 @@ class MyModelName(models.Model):
 - null		-	If True, store blank vals as NULL. (CharField will be stored as an empty string) Def: False
 - blank		-	If True, is allowed to be blank in forms. Def: False, meaning you will be forced to provide a val. (Often used with null=True)
 - choices	-	A group of choices for this field. Default form widget will be a select box with these choices.
-- primary_key	-	If True, sets the current field as the primary key for the model. If no field is specified, Django will add a field automatically
+- primary_key	-	If True, sets the current field as the primary key for the model. If no field is specified, Django will add a field automatically (named: id)
 
 ### Common Field Types
 - CharField	-	Must specify max_length
@@ -76,3 +76,64 @@ class MyModelName(models.Model):
 			- param on_delete -> specify what happens when the associated record is deleted
 				- (e.g. a val of models.SET_NULL would simply set the vall to NULL)
 - etc: https://docs.djangoproject.com/en/2.1/ref/models/fields/#field-types
+
+
+## Metadata
+- https://docs.djangoproject.com/en/2.1/ref/models/options/
+- ordering = ['title', '-pubdate'] or ['-my_field_name']	-	Ordering upon querying
+- verbose_name = 'BetterName'
+- define access permissions	- different than the ones assigned by default
+- declare a model class as abstract	- will allow the Model to be used for other Models (and prevent storing records)
+- others control how data are stored; they can be used to map the model to a different db that already exists
+
+
+## Methods
+- __str__()		-	Should be defined on every model. Represent individual records in the Admin site.
+- get_absolute_url()	-	(usually) URL displays individual model records. (Automatically adds a "View on Site" button to the model's editing screens in the Admin site.
+- any other method
+
+## Model Management
+
+### Create & Modify Record
+`# Create a new record using the model's constructor
+record = MyModelName(my_field_name="Instance No1")
+
+ # Save the object into the db.
+record.save()
+
+ # Access the fields using dot syntax
+print(record.id)	# Should return 1 for the first record.
+print(record.my_field_name)	# Should print 'Instance No1'
+
+ # Save the modified record
+record.my_field_name = "New Instance Name"
+record.save()
+`
+
+### Searching for records
+-	Can retrieve records for a model as a QuerySet. (iterable object)	objects.all()
+`all_books = Book.objects.all()`
+
+-	Filter the returned QuerySet (text or numeric field).
+`wild_books = Book.objects.filter(title__contains='wild')
+number_wild_books = wild_books.count()`
+
+-	In general filtering happens like this:
+	-	field_name__match_type
+	-	field_name__field_name__match_type
+		`# Will match on: Fiction, Science fiction, non-fiction etc.
+			books_containing_genre = Book.objects.filter(genre__name__icontains='fiction')`
+	-	match_type can be:
+			-	contains	Case-Sensitive
+			-	icontains	insensitive
+			-	iexact		insensitive exact match
+			-	exact
+			-	in, gt
+			-	startswith
+			-	https://docs.djangoproject.com/en/2.1/ref/models/querysets/#field-lookups
+-	There is a lot more you can do with queries, including backwards searches from related models, chaining filters, returning a smaller set of values etc. https://docs.djangoproject.com/en/2.1/topics/db/queries/
+
+
+
+## Misc
+- https://stackoverflow.com/a/9181710
