@@ -13,7 +13,7 @@ Run the following commands to define tables or change the db tables whenever you
 - python3 manage.py makemigrations
 - python3 manage.py migrate
 
-## Optional can specify app name, in order to migrate only the given apps Models etc.
+Optional can specify app name, in order to migrate only the given apps Models etc.
 - python3 manage.py makemigrations catalog
 
 ## Models - Important:
