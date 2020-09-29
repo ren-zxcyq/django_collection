@@ -10,11 +10,11 @@ By default it will serve the site to your local computer (http://127.0.0.1:8000/
 
 ## Update Models
 Run the following commands to define tables or change the db tables whenever you change something in the models.
-- python3 manage.py makemigrations
-- python3 manage.py migrate
+- `python3 manage.py makemigrations`
+- `python3 manage.py migrate`
 
 Optional can specify app name, in order to migrate only the given apps Models etc.
-- python3 manage.py makemigrations catalog
+- `python3 manage.py makemigrations catalog`
 
 ## Models - Important:
 - Models define the structure of stored data.
@@ -22,6 +22,7 @@ Optional can specify app name, in order to migrate only the given apps Models et
 - Models are implemented as subclasses of:	django.db.models.Model
 
 - An Example:
+
 	`from django.db import models
 
 	class MyModelName(models.Model):
@@ -89,7 +90,7 @@ Optional can specify app name, in order to migrate only the given apps Models et
 
 
 ## Methods
-- __str__()		-	Should be defined on every model. Represent individual records in the Admin site.
+- \__str__()		-	Should be defined on every model. Represent individual records in the Admin site.
 - get_absolute_url()	-	(usually) URL displays individual model records. (Automatically adds a "View on Site" button to the model's editing screens in the Admin site.
 - any other method
 
