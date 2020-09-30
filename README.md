@@ -140,7 +140,34 @@ Optional can specify app name, in order to migrate only the given apps Models et
 		-	https://docs.djangoproject.com/en/2.1/ref/models/querysets/#field-lookups
 	-	There is a lot more you can do with queries, including backwards searches from related models, chaining filters, returning a smaller set of values etc. https://docs.djangoproject.com/en/2.1/topics/db/queries/
 
+## Model Registering
+- After model creation in the dependent app (here: catalog) we need to register our models in:	dependentapp/admin.py
+- This populates the Admin area of the site.
+- Format of registration: (Contents of catalog/admin.py)
+	```
+	from django.contrib import admin
 
+	# Register your models here.
+
+	from .models import Language, Genre, Author, Book, BookInstance
+
+	admin.site.register(Language)
+	admin.site.register(Genre)
+	admin.site.register(Author)
+	admin.site.register(Book)
+	admin.site.register(BookInstance)
+	```
+
+# Creating a superuser
+- In order to log on to the admin site, we need an acc with <i>Staff</i> status enabled.
+- ?Can further define permissions.
+- Creation Process:
+  ```
+  python3 manage.py createsuperuser
+  # Prompts for: Username && email && pass
+  # And run server again:
+  python3 manage.py runserver
+  ```
 
 # Misc
 - https://stackoverflow.com/a/9181710
