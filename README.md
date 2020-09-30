@@ -169,5 +169,226 @@ Optional can specify app name, in order to migrate only the given apps Models et
   python3 manage.py runserver
   ```
 
+# Admin Site
+
+## Overview
+- You can edit an entry by selecting its name in the link.
+  - The edit page for an entry is almost identical to the "Add" page.
+  - The main differences are the page title and the addition of Delete, HISTORY and VIEW ON SITE buttons.
+  - <b>VIEW ON SITE</b> (button appears because we defined the <b>get_absolute_url()</b> method in our model).
+- Can create an instance of a table from a table that contains its ForeignKey
+  - In our example we can create a Book from a BookInstance.
+- Can actually change how lists appear and what options exist in the Admin site.
+  - You can further customise the interface to make it even easier to use. Some of the things you can do are:
+
+    - List views: 
+        - Add additional fields/information displayed for each record. 
+        - Add filters to select which records are listed, based on date or some other selection value (e.g. Book loan status).
+        - Add additional options to the actions menu in list views and choose where this menu is displayed on the form.
+    - Detail views
+        - Choose which fields to display (or exclude), along with their order, grouping, whether they are editable, the widget used, orientation etc.
+        - Add related fields to a record to allow inline editing (e.g. add the ability to add/edit book records while creating their author record).
+  - https://docs.djangoproject.com/en/2.1/ref/contrib/admin/
+
+## Modifying Admin site behaviour
+- Register a ModelAdmin class	(which describes the layout - Src: https://docs.djangoproject.com/en/dev/ref/contrib/admin/#modeladmin-objects)
+  - Open dependentapp/admin.py (in our case: catalog/admin.py) and:
+    - Comment out our original registration
+    - Create a class that "extends" the admin.ModelAdmin class
+    - Register the model using that class
+    - Below, you can see the contents of my catalog/admin.py
+		```
+		from django.contrib import admin
+
+		# Register your models here.
+
+		from .models import Author, Book, BookInstance, Genre, Language
+
+
+		# Author
+		# Previously:
+		#admin.site.register(Author)
+		# Changed to:
+		# Define the admin class
+		class AuthorAdmin(admin.ModelAdmin):
+			pass    # If pass is defined here the Admin site behaviour won't be changed
+
+		# Register the admin class with the associated model
+		admin.site.register(Author, AuthorAdmin)
+
+
+		# Similarly:
+		# Book
+		# admin.site.register(Book)
+		class BookAdmin(admin.ModelAdmin):
+			pass
+
+		# Register the admin class with the associated model
+		admin.site.register(Book, BookAdmin)
+
+
+		# We are changing BookInstanceAdmin as well, but;
+		# Instead we could use the decorator "@register"
+		# and achieve the exact same thing, but with different syntax.
+		@admin.register(BookInstance)
+		class BookInstanceAdmin(admin.ModelAdmin):
+			pass
+
+
+		# Models Language and Genre won't be changed so they are left unchanged
+		admin.site.register(Language)
+		admin.site.register(Genre)
+		```
+  - Modify the "extending" classes to implement Admin site behaviour.
+    - Example:
+      - Configure list views
+        - The Author list on the Admin site just displayed "Last Name"
+        - That was the result of using the object name generated from the model using the \_\_str__() method
+        - list_display() instead of \_\_str__() makes it possible for us to show more columns.
+        - Modify the AuthorAdmin(admin.ModelAdmin) class
+		```
+		# Define the admin class
+		class AuthorAdmin(admin.ModelAdmin):
+			# pass    # If pass is defined here the Admin site behaviour won't be changed
+			list_display = ('last_name', 'first_name', 'date_of_birth', 'date_of_death')
+
+		# Register the admin class with the associated model
+		admin.site.register(Author, AuthorAdmin)
+		```
+		- Another scenario - ManyToMany relationship depicted by a Books Genre
+		```
+		# Similarly:
+		# Book
+		# admin.site.register(Book)
+		class BookAdmin(admin.ModelAdmin):
+			# pass
+			list_display = ('title', 'author', 'display_genre')
+			# as genre is a ManyToManyField we cannot display it directly in list_display()
+			# instead we:
+			# 1) (catalog/models.py) - In the Book Class defined a function to get the info as a string
+			#                           display_genre()
+			# 2) (catalog/models.py) - In the Book Class define the attribute
+			#                           display_genre - which returns output of the above function.
+			# as:
+			#   def display_genre(self):
+			#       """Create a string for the Genre. This is required to display genre in Admin."""
+			#       return ', '.join(genre.name for genre in self.genre.all()[:3])
+			#   display_genre.short_description = 'Genre'
+			#
+			# Note from the docs: Getting the genre may not be a good idea here, because of the "cost"
+			# of the database operation.
+			# We're showing you how because calling functions in your models can be
+			# very useful for other reasons — for example to add a Delete link next to every
+			# item in the list.
+
+		# Register the admin class with the associated model
+		admin.site.register(Book, BookAdmin)
+		```
+	- Add List filters	-	done by <b>list_filter</b>  attribute
+    	- Adds a sidebar in the Admin site, which allows you item filtering
+		- In dependentapp/admin.py - (catalog/admin.py) - Again, modify the admin.ModelAdmin extending function.
+			```
+			@admin.register(BookInstance)
+			class BookInstanceAdmin(admin.ModelAdmin):
+				# pass
+				list_filter = ('status', 'due_back')
+				# Once you've got a lot of items in a list, it can be useful to be able to
+				# filter which items are displayed.
+				# This is done by listing fields in the list_filter attribute.
+			```
+	- Organize detail view layout:
+    	- Def: Items are shown vertically in the sequence declared in the apps models.py
+    	- Can change:
+        	- order
+        	- which fields are displayed
+        	- whether sections are used to organise the info
+        	- whether fields are displayed horizontally or vertically
+        	- what widgets are used in the admin forms
+		- A few examples:
+    		- Which fields are displayed
+        		- attribute <b>fields = ['first_name', 'last_name']</b>
+        		- Modify appname/admin.py
+					```
+					# Define the admin class
+					class AuthorAdmin(admin.ModelAdmin):
+						# pass    # If pass is defined here the Admin site behaviour won't be changed
+						# list_display -> which column names to show
+						list_display = ('last_name', 'first_name', 'date_of_birth', 'date_of_death')
+						# fields -> column order of appearance (& layout - Fields in a tuple are displayed horizontally)
+						fields = ['first_name', 'last_name', ('date_of_birth', 'date_of_death')]
+
+
+					# Register the admin class with the associated model
+					admin.site.register(Author, AuthorAdmin)
+					```
+				- attribute <b>exclude</b>
+    				- Declare a list of attributes which are not shown
+    		- Sectioning the Detail View
+        		- attribute <b>fieldsets</b>
+        		- add "sections" to group related model information within the detail form.
+          		- Modify appname/admin.py
+					```
+					@admin.register(BookInstance)
+					class BookInstanceAdmin(admin.ModelAdmin):
+						# pass
+						list_filter = ('status', 'due_back')
+						# Once you've got a lot of items in a list, it can be useful to be able to
+						# filter which items are displayed.
+						# This is done by listing fields in the list_filter attribute.
+						#
+
+						# Add "Sections" in detail view
+						fieldsets = (
+							(None, {
+								'fields': ('book', 'imprint', 'id')
+							}),
+							('Availability', {
+								'fields': ('status', 'due_back')
+							}),
+						)
+					```
+			- Inline editing of associated records
+    			- can add associated records at the same time
+    			- declare inlines of type TabularInline (horizontal layout) or StackedInline (vertical layout)
+					```
+					# Book
+					# admin.site.register(Book)
+					#
+					# But, we are declaring a class extending admin.TabularInLine
+					# to be able to modify related items from the Detail View.
+					# So,
+					# 1) we create: class BooksInstanceInline
+					# 2) we add the "inlines" attribute to the BookAdmin admin.ModelAdmin class
+					# These 2 add an inline block in the Book Details View.
+					class BooksInstanceInline(admin.TabularInline):
+						model = BookInstance
+
+					class BookAdmin(admin.ModelAdmin):
+						# pass
+						list_display = ('title', 'author', 'display_genre')
+						# as genre is a ManyToManyField we cannot display it directly in list_display()
+						# instead we:
+						# 1) (catalog/models.py) - In the Book Class defined a function to get the info as a string
+						#                           display_genre()
+						# 2) (catalog/models.py) - In the Book Class define the attribute
+						#                           display_genre - which returns output of the above function.
+						# as:
+						#   def display_genre(self):
+						#       """Create a string for the Genre. This is required to display genre in Admin."""
+						#       return ', '.join(genre.name for genre in self.genre.all()[:3])
+						#   display_genre.short_description = 'Genre'
+						#
+						# Note from the docs: Getting the genre may not be a good idea here, because of the "cost"
+						# of the database operation.
+						# We're showing you how because calling functions in your models can be
+						# very useful for other reasons — for example to add a Delete link next to every
+						# item in the list.
+						inlines = [BooksInstanceInline]
+
+
+					# Register the admin class with the associated model
+					admin.site.register(Book, BookAdmin)
+					```
+
 # Misc
 - https://stackoverflow.com/a/9181710

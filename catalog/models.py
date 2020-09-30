@@ -40,6 +40,10 @@ class Book(models.Model):
     summary = models.TextField(max_length=1000, help_text='Enter a brief description of the book')
     isbn = models.CharField('ISBN', max_length=13, help_text='13 Character <a href="https://www.isbn-international.org/content/what-isbn">ISBN number</a>')
 
+    # ManyToManyField used because genre can contain many books. Books can cover many genres.
+    # Genre class has already been defined so we can specify the object above.
+    genre = models.ManyToManyField(Genre, help_text='Select a genre for this book')
+
     language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
     # ForeignKey Setup - We set up the Language ForeignKey using the class name because the Language class is defined before the Book class.
 
@@ -54,6 +58,11 @@ class Book(models.Model):
         # (for this to work we will have to define a URL mapping that has the name book-detail, and
         # define an associated view and template).
 
+    def display_genre(self):
+        """Create a string for the Genre. This is required to display genre in Admin."""
+        return ', '.join(genre.name for genre in self.genre.all()[:3])
+
+    display_genre.short_description = 'Genre'
 
 # ForeignKey -> Identify the associated Book (depicting a 1-Many relationship)
 
