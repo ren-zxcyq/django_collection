@@ -25,6 +25,11 @@ from django.urls import include
 urlpatterns += [
         path('catalog/', include('catalog.urls')),
 ]
+# Note: Whenever Django encounters the import function
+# django.urls.include()
+# it splits the URL string at the designated end character
+# and sends the remaining substring
+# to the included URLconf module for further processing.
 
 # Add URL maps to redirect the base URL to our application
 from django.views.generic import RedirectView

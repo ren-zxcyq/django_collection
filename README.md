@@ -389,6 +389,201 @@ Optional can specify app name, in order to migrate only the given apps Models et
 					# Register the admin class with the associated model
 					admin.site.register(Book, BookAdmin)
 					```
+# External Page
+  - Home Page
+    - URL Mapping
+      - Our main application/urls.py declares that when requests to ip/catalog are received
+      - application/urls.py contains
+		```
+		from django.contrib import admin
+		from django.urls import path
+
+		urlpatterns = [
+			path('admin/', admin.site.urls),
+		]
+
+		# Use include() to add paths from the catalog application
+		from django.urls import include
+		urlpatterns += [
+				path('catalog/', include('catalog.urls')),
+		]
+		# Note: Whenever Django encounters the import function
+		# django.urls.include()
+		# it splits the URL string at the designated end character
+		# and sends the remaining substring
+		# to the included URLconf module for further processing.
+
+		# Add URL maps to redirect the base URL to our application
+		from django.views.generic import RedirectView
+		urlpatterns += [
+				path('', RedirectView.as_view(url='catalog/', permanent=True)),
+		]
+
+		# Use static() to add url mapping to serve static files during development (only)
+		from django.conf import settings
+		from django.conf.urls.static import static
+
+		urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+		```
+      - Whenever Django encounters <b>django.urls.include()</b>
+        - Django splits the URL string at the designated end character and
+        - sends the remaining substring to the included URLconf module for further processing.
+      - So, we defined a placeholder <b>/catalog/urls.py</b> file
+        - Contents:
+			```
+			from django.urls import path
+			from . import views
+
+			urlpatterns = [
+				path('', views.index, name='index')
+			]
+			# - '' -> a URL pattern which is an empty string
+			# - A view function will be called when the pattern is detected:
+			#	<b>views.index</b> -> <b>index()</b> in <b>views.py</b>
+			# - 'name' identifier for this particular URL mapping
+			#	we can use the name to "reverse" the mapper
+			#	i.e. to dynamically create a URL that points to the resource that
+			#			the mapper is designed to handle.
+			#	for example:
+			#		we can use the name param
+			#		to link to our home page from any other page template
+			#			<a href="{% url 'inded' %}">Home</a>
+			```
+	- View (function-based)
+    	- A view is a function that:
+        	- processes an HTTP request
+        	- fetches the required data from the database
+        	- renders the data in an HTML page using an HTML template
+        	- returns the generated HTML in an HTTP response
+      	- In our example, our Home page
+        	- fetches info about the number of Book, BookInstance, available BookInstance and Author records
+        	- and passes that info to a template for display
+      	- catalog/views.py
+        	- <b>render()</b>	-	to generate an HTML file using a template and data:
+				```
+				from django.shortcuts import render
+
+				# Create your views here.
+				from catalog.models import Author, Book, BookInstance, Genre
+
+				def index(request):
+					"""View function for home page of site."""
+
+					# Generate counts of some of the main objects
+					num_books = Book.objects.all().count()
+					num_instances = BookInstance.objects.all().count()
+
+					# Available books (status = 'a')
+					num_instances_available = BookInstance.objects.filter(status__exact='a').count()
+
+					# The 'all()' is implied by default
+					num_authors = Author.objects.count()
+
+					context = {
+						'num_books': num_books,
+						'num_instances': num_instances,
+						'num_instances_available': num_instances_available,
+						'num_authors': num_authors,
+					}
+
+					# Render the HTML template index.html with the data in the context variable
+					return render(request, 'index.html', context=context)
+					# render() accepts:
+					#   - original request  -   HttpRequest
+					#   - an HTML template  -   with PLACEHOLDERS for the data
+					#   - context variable  -   which is a Python dict, containing the data to insert into the PLACEHOLDERS
+				```
+	- Template
+    	- A text file that defines the structure of a file (such as an HTML page).
+        	- Uses PLACEHOLDERS to represent actual content.
+      	- Django automatically looks for templates in a directory named <b>'templates'</b> in your application
+        	- for example when: render(request, 'index.html', context=context)
+        	- render will expect to find index.html in /locallibrary/catalog/templates/
+        	- if the file is not found:	<b>TemplateDoesNotExist</b> at /catalog/
+      	- Based on your project's settings file, Django will look for templates in a number of places, searching in your installed applications by default. More: https://docs.djangoproject.com/en/2.1/topics/templates/
+      	- Extending Templates
+        	- Puzzle of templates
+          	- Sample:
+				```
+				<!DOCTYPE html>
+				<html lang="en">
+				<head>s
+				{% block title %}<title>Local Library</title>{% endblock %}
+				</head>
+				<body>
+				{% block sidebar %}<!-- insert default navigation text for every page -->{% endblock %}
+				{% block content %}<!-- default content text (typically empty) -->{% endblock %}
+				</body>
+				</html>
+				```
+			- Notice: <b>Common HTML</b> with sections for title, sidebar or content marked with
+    			- <b>block</b>
+    			- <b>endblock</b>
+			- These are called <b>TEMPLATE TAGS</b>
+  			- TEMPLATE TAGS are <b>functions</b> that you can use in a template to:
+    			- loop through lists
+    			- perform conditional operations based on the val of a var
+  			- The syntax also allows:
+    			- referencing values passed into the <b>template</b> from the <b>view</b>
+    			- using template filters to format variables (for example, to convert a string to lower case).
+  			- <b>extends</b> template tag.
+    			- When defining a template:
+                    1) specify the base template using the extends template tag
+                    2) Declare which sections from the template we want to replace (if any), using block/endblock sections
+				- In the below example, we override the content block. The generated HTML will include the code and structure defined in the base template, including default content defined in the title block, but the new content block in place of the default one.
+					```
+					{% extends "base_generic.html" %}
+
+					{% block content %}
+						<h1>Local Library Home</h1>
+						<p>Welcome to LocalLibrary, a website developed by <em>Mozilla Developer Network</em>!</p>
+					{% endblock %}
+					```
+		- The local Library Base Template
+    		- In our library example create:
+        		- base_generic.html in /locallibrary/catalog/templates/
+        		- styles.css file in /locallibrary/catalog/static/css/
+  		- The index template
+      		- Create:
+        		- index.html in /locallibrary/catalog/templates/	which extends base_generic.html & replaces the content block
+        		- index.html declares variables
+        		- template:
+            		- variables	-	enclosed in double braces ({{ num_books }})
+            		- tags (functions)	-	enclosed in single braces with percentage signs ({% extends "base_generic.html" %}).
+				- variables are named with the keys we pass in the context dict in function render()
+		- Referencing static files in templates
+    		- Specify the location in templates relative to the <b>STATIC_URL</b> global setting. (def: /static/)
+    		- Use <b>static</b> template tag and specify the relative URL
+				```
+				{% load static %}
+				<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+				```
+			- or adding an image
+				```
+				{% load static %}
+				<img src="{% static 'catalog/images/local_library_model_uml.png' %}" alt="UML diagram" style="width:555px;height:540px;">
+				```
+			- Note on the docs: The samples above specify where the files are located, but Django does not serve them by default. We configured the development web server to serve files by modifying the global URL mapper (/locallibrary/locallibrary/urls.py) when we created the website skeleton, but still need to enable file serving in production. We'll look at this later.
+		- Linking to URLs
+    		- <b>url</b> template tag
+				```
+				<li><a href="{% url 'index' %}">Home</a></li>
+				```
+			- accepts the name of a path() function called in your <b>urls.py</b>
+    			- The above assumes at least the following content in catalog/urls.py:
+					```
+					from django.urls import path
+					from . import views
+
+					urlpatterns = [
+						path('', views.index, name='index')
+					]
+					```
+			- returns a URL that you can use to link to the resource
+    	- Configuring where to find the templates
+        	- Need to point Django to look for the templates folder.
+        	- Add the templats dir to the TEMPLATES object.
+        	- edit settings.py	
 
 # Misc
 - https://stackoverflow.com/a/9181710
