@@ -110,7 +110,6 @@ class BookInstance(models.Model):
         return f'{self.id} ({self.book.title})'
 
 
-
 class Author(models.Model):
     """Model representing an author."""
     first_name = models.CharField(max_length=100)

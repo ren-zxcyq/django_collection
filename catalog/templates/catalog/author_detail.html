@@ -1,0 +1,23 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h1>Author: {{ author.last_name }} {{ author.first_name }}</h1>
+
+  <p><strong>Date of birth:</strong> <a href="">{{ author.date_of_birth }}</a></p> <!-- author detail link not yet defined -->
+  <p><strong>Date of death:</strong> <a href="">{{ author.date_of_death }}</a></p> <!-- author detail link not yet defined -->
+
+
+  <div style="margin-left:20px;margin-top:20px">
+    <h4>Books</h4>
+
+    {% for book in author.book_set.all %}
+        <hr>
+        <p class="{% if copy.status == 'a' %}text-success{% elif copy.status == 'm' %}text-danger{% else %}text-warning{% endif %}">
+        {{ book.get_status_display }}
+        </p>
+        <p><strong>Title:</strong> {{ book.title }}</p>
+        <p class="text-muted"><strong>ISBN:</strong> {{ book.isbn }}</p>
+    {% endfor %}
+
+  </div>
+{% endblock %}

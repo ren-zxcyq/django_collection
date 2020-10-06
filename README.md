@@ -585,5 +585,95 @@ Optional can specify app name, in order to migrate only the given apps Models et
         	- Add the templats dir to the TEMPLATES object.
         	- edit settings.py	
 
+
+# Generic list and detail views
+- URL mapping
+  - add another path in /catalog/urls.py
+	```
+	path('books/', views.BookListView.as_view(), name='books')
+	```
+  - views.BookListView.as_view() has a different format than views.index for example.
+  - <b>class-based view</b>
+    - its own class
+    - inheriting from an existing generic view function that already does most of what we want this view function to do
+  - as_view()
+    - does all the work of creating an instance of the class
+    - making sure the right handler methods are called for incoming HTTP requests
+- View (class-based)
+  - Could easily just build it directly like a normal view (e.g. the index view)
+    - we would query the db
+    - then call render()
+    - pass in the list to a template
+  - Instead:
+    - class-based generic list view (ListView)
+    - ListView:
+      - a class that inherits from an existing view.
+      - more robust list view with less code
+  - catalog/views.py
+
+  - 
+
+
+# Sessions
+- Django uses a cookie containing a special session id to identify each browser and its associated session with the site. The actual session data is stored in the site database by default (this is more secure than storing the data in a cookie, where they are more vulnerable to malicious users). You can configure Django to store the session data in other places (cache, files, "secure" cookies), but the default location is a good and relatively secure option.
+
+## Enabling sessions
+Change your project/settings.py	(in our case:	locallibrary/settings.py)
+```
+INSTALLED_APPS = [
+	...
+	'django.contrib.session',
+	...
+MIDDLENAME = [
+	...
+	'django.contrib.sessions.middleware.SessionMiddleware',
+	...
+```
+
+## Using sessions
+- Can access session data via the request.session attribute, where request is the request object (an HttpRequest) passed into the view.
+- Again: It represents the specific connection to the current user (the current browser)
+- <b>request.session</b>	-	<b>dictionary-like</b> object
+	- can sort/"check if key is present"/set/delete/"loop through data"
+	- HOWEVER -> std "dictionary" API	(most of the time)	-> get/set values
+- Example:
+	```
+	# Get a session value by its key (e.g. 'my_car'), raising a <b>KeyError</b> if the key is not present
+	my_car = request.session['my_car']
+
+	# Get a session value, setting a default if it is not present ('mini')
+	my_car = request.session.get('my_car', 'mini')
+
+	# Set a session value
+	request.session['my_car'] = 'mini'
+
+	# Delete a session value
+	del request.session['my_car']
+	```
+- Furthermore:
+	- Methods to manage the associated session cookie
+	- Methods to test that cookies are supported in the client browser.
+	- Set and check cookie expiry dates.
+	- Clear expired sessions from the data store.
+	- More at:	https://docs.djangoproject.com/en/2.1/topics/http/sessions/
+
+## Saving session data
+By def	-	Django only saves to the session db & sends the session cookie to the client when the session has been modified (assigned or deleted). If you're updating its session key as shown in the previous section, the update is done automatically.
+Example:
+	```
+	# This is detected as an update to the session, so session data is saved.
+	request.session['my_car'] = 'mini'
+	```
+<b>However</b>, if you modify data <b><i>within</i> session data</b>, Django will NOT recognise the change by default. You need to <b>explicitly mark the session as having been modified</b>.
+	```
+	# Session object not directly modified, only data WITHIN the session.
+	# Session changes NOT saved!
+	request.session['my_car']['wheels'] = 'alloy'
+
+	# Set session as modified to FORCE data updates/cookie to be saved.
+	request.session.modified = True
+	```
+- Alternatively, add SESSION_SAVE_EVERY_REQUEST = True in project/settings.py (here: locallibrary/settings.py)
+
 # Misc
 - https://stackoverflow.com/a/9181710
