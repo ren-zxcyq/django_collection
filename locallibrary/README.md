@@ -1,7 +1,5 @@
-# django_experiment
-Django Tut Playground @Ix76y
-
 # Notes
+This folder contains all notes we kept when walking through the Mozilla Django tutorial, found at: https://developer.mozilla.org/en-US/docs/Learn/Server-side/Django/Introduction
 
 ## Run the server (Development ONLY)
 By default it will serve the site to your local computer (http://127.0.0.1:8000/), but you can also specify other computers on your network to serve to.

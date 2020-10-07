@@ -1,3 +1,7 @@
+# django_experiment
+Django Tutorials Notes Collection & Playground
+by: @ren-zxcyq & @Ix76y
+
 # Useful Commands and Links
 
 ## Links
