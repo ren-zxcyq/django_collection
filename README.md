@@ -1,4 +1,4 @@
-# django_experiment
+# django_collection
 Django Tutorials Notes Collection & Playground
 by: @ren-zxcyq & @Ix76y
 
