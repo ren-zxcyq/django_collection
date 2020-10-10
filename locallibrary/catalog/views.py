@@ -124,3 +124,20 @@ class AuthorListView(generic.ListView):
 
 class AuthorDetailView(generic.DetailView):
     model = Author
+
+
+# Add a view that will list all BookInstance objects currently loaned to a specific user.
+# We only want this view to be available to logged-in users.
+# For this reason, we are going to use:	LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class LoanedBooksByUserListView(LoginRequiredMixin, generic.ListView):
+	"""Generic class-based view listing books on looan to current user."""
+	model = BookInstance
+	template_name = 'catalog/bookinstance_list_borrowed_user.html'
+	paginate_by = 10
+
+	# Using 'get_queryset' we can restrict the list to BookInstance objects for the current user.
+	# locallibrary/catalog/models.py -> BookInstance -> LOAN_STATUS (===array where 'o' means on_loan)
+	def get_queryset(self):
+		return BookInstance.objects.filter(borrower=self.request.user).filter(status__exact='o').order_by('due_back')

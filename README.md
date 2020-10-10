@@ -10,6 +10,9 @@ by: @ren-zxcyq & @Ix76y
 [Template Stuff](https://docs.djangoproject.com/en/3.1/ref/templates/language/)
 [sessions](https://docs.djangoproject.com/en/3.1/topics/http/sessions/)
 [e-mail Password Reset](https://docs.djangoproject.com/en/3.1/topics/email/)
+[User auth](https://docs.djangoproject.com/en/3.1/topics/auth/)
+[Using the User auth system](https://docs.djangoproject.com/en/3.1/topics/auth/default/)
+[Decorating Class-based views](https://docs.djangoproject.com/en/3.1/topics/class-based-views/intro/#decorating-class-based-views)
 
 
 ### Tutorials

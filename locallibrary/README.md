@@ -705,6 +705,18 @@ MIDDLEWARE = [
 		1) tommy	thisisstupid
 		2) tammy	thisisstupid
 ~CONTINUE at: Setting up your authenticated views
+- Can add users programmatically
+```
+from django.contrib.auth.models import User
+
+# Create user & save to the db
+user = User.objects.create_user('newusername', 'email@whatever.com', 'newpassword')
+
+# Update fields & save
+user.first_name = 'John'
+user.last_name = 'Doe'
+user.save()
+```
 
 # Setting up our own authentication views
 ## Project URLs
@@ -966,8 +978,135 @@ http://localhost:8000/accounts/reset/Mg/abdub7-47eabebc3cbf905e174cfec8454a0fb7/
 ```
 We can actually change passwords this way!
 
+## Testing against authenticated users
+### Testing in templates
+- You can get info about the currently logged in user in templates with the <b>{{ user }}</b> variable.
+- This is added to the template context by default
+- {{ user.is_authenticated }}
+- For example, here we add a login/logout button that acts accordingly. So, in locallibrary/catalog/templates/base_generic.html:
+	```
+          <li><a href="{% url 'authors' %}">All authors</a></li>
+        {% if user.is_authenticated %}
+                <li>User: {{ user.get_username }}</li>
+                <li><a href="{% url 'logout' %}?next={{ request.path }}">Logout</a></li>
+        {% else %}
+                <li><a href="{% url 'login' %}?next={{ request.path }}">Login</a></li>
+        {% endif %}
+	```
+- Note also how we have appended ?next={{request.path}} to the end of the URLs. What this does is add a URL parameter next containing the address (URL) of the current page, to the end of the linked URL. After the user has successfully logged in/out, the views will use this "next" value to redirect the user back to the page where they first clicked the login/logout link.
+	- For example, in our case, when we are in ROOT/catalog/, it will be:	http://localhost:8000/accounts/logout/?next=/catalog/
+	- Upon logging out, the user will be redirected to ROOT/catalog/
+
+### Testing in views
+<h4>Function-based Views:</h4>
+The EASIEST way to restrict access to view functions, is to apply the <b>login_required</b> decorator to them.
+
+  - If the user is not logged in, then the user will be redirected to the login URL <b>settings.LOGIN_URL</b>, defined in the project settings, <b>passing the current absolute path as the <i>next</i> URL</b> param.
+  - If the user <b>logs in successfully they will be <i>redirected</i></b> to that <i>next</i> URL.
+  - Example:
+	```
+	from django.contrib.auth.decorators import login_required
+
+	@login_required
+	def my_view(request):
+		...
+	```
+Another way of achieving this is to check
+  - <b>request.user.is_authenticated</b> 
+
+<h4>Class-based views:</h4>
+Derive from <b>LoginRequiredMixin</b>
+	- Declare this mixin first in the superclass list.
+	- Before the main view class.
+	- Example:
+	```
+	from django.contrib.auth.mixins import LoginRequiredMixin
+
+	class MyView(LoginRequiredMixin, View):
+		...
+	```
+	- This has the exact same behaviour as the login_required decorator.
+	- Can also specify an alternative location to redirect the user to if they are not authenticated
+		- <b>login_url</b>
+		- a URL param instead of <i>next</i> to insert the current absolute path <b>redirect_field_name</b>
+	```
+	class MyView(LoginRequiredMixin, View):
+		login_url = '/login/'
+		redirect_field_name = 'redirect_to'
+	```
+For more info:	https://docs.djangoproject.com/en/2.1/topics/auth/default/#limiting-access-to-logged-in-users
+
+
 ## Example - listing the current user's books
-@TODO
+- Create a view where the books a user has will be listed.
+	- Extend the <i>BookInstance model</i> to support the concept of borrowing a book.
+		- oepn catalog/models.py
+			- import User from django.contrib.auth.models
+			- add BookInstance.borrower
+			- add a property that we can call from our templates to tell if a particular book instance is overdue. While we could calculate this in the template itself, using a property as shown below will be much more efficient.
+@TODO continue this a bit, until PERMISSIONS
+
+# Permissions
+- Info:
+	- Perms are associated with models & define ops that can be performed on a model instance by a user who has the perm.
+	- Def:	ADD CHANGE DEL - to all models (which allows users with the perms to perform these actions via the admin site)
+	- Can:	def our own perms to models & grant them to specific users
+	- Can:	change perms associated with diff instnces of the same model
+	- <b>permission checks always return true for superusers, even if a permission has not yet been defined!</b>
+	- Testing on perms in views & templates is thne similar for testing on the auth status
+- "<b>class Meta</b>" def perms		(<b>permissions field</b>)
+	- Can specify as many perms in a <i>tuple</i>
+	- Each PERM itself in a <i>nested tuple</i>
+	- Example:
+	```
+	class BookInstance(models.Model):
+		...
+		permissions = (('can_mark_returned', 'Set book as returned'),)
+	```
+	We could then assign the perm to a "Librarian" group in the Admin site.
+	- catalog/models.py & add the perm as shown above.	-	Rerun migrations
+- Templates
+	- <b>{{ perms }}</b>   -> Holds the curr user's perms
+	- <b>{{ perms.catalog.can_mark_returned }}</b> = True -> Check perm for the associated "app"
+		```
+		{% if perms.catalog.can_mark_returned %}
+			<!-- We can mark a BookInstance as returned. -->
+			<!-- Perhaps add code to link to a "book return" view here. -->
+		{% endif %}
+		```
+- Views
+	- function-based view -> <b>@permission_required</b>
+		```
+		from django.contrib.auth.decorators import permission_required
+
+		@permission_required('catalog.can_mark_returned')
+		@permission_required('catalog.can_edit')
+		def my_view(request):
+			...
+		```
+
+	- class-based view -> <b>PermissionRequiredMixin</b>
+		```
+		from django.contrib.auth.mixins import PermissionRequiredMixin
+
+		class MyView(PermissionRequiredMixin, View):
+			permission_required = 'catalog.can_mark_returned'
+			# Or multiple perms
+			permission_required = ('catalog.can_mark_returned', 'catalog.can_edit')
+			# Note that 'catalog.can_edit' is just an example
+			# the catalog application doesn't have such permission!
+
+- @TODO Challenge:
+```
+Earlier in this article, we showed you how to create a page for the current user listing the books that they have borrowed. The challenge now is to create a similar page that is only visible for librarians, that displays all books that have been borrowed, and which includes the name of each borrower.
+
+You should be able to follow the same pattern as for the other view. The main difference is that you'll need to restrict the view to only librarians. You could do this based on whether the user is a staff member (function decorator: staff_member_required, template variable: user.is_staff) but we recommend that you instead use the can_mark_returned permission and PermissionRequiredMixin, as described in the previous section.
+
+Important: Remember not to use your superuser for permissions based testing (permission checks always return true for superusers, even if a permission has not yet been defined!). Instead, create a librarian user, and add the required capability.
+
+When you are finished, your page should look something like the screenshot below.
+```
+
 
 # Misc
 - https://stackoverflow.com/a/9181710
